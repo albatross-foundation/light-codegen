@@ -19,7 +19,9 @@ import static java.io.File.separator;
  * Created by steve on 24/04/17.
  */
 public class Cli {
-
+    @Parameter(names={"--build", "-b"}, required = true,
+            description = "The framework template to be used as scaffolding to the generated code.")
+    String build;
     @Parameter(names={"--framework", "-f"}, required = true,
             description = "The framework template to be used as scaffolding to the generated code.")
     String framework;
@@ -105,7 +107,7 @@ public class Cli {
             if(parameterizationDir != null) {
                 YAMLFileParameterizer.rewriteAll(parameterizationDir, output + separator + YAMLFileParameterizer.DEFAULT_DEST_DIR, anyConfig.asMap().get(YAMLFileParameterizer.GENERATE_ENV_VARS).asMap());
             }
-            generator.generate(output, anyModel, anyConfig);
+            generator.generate(output, build, anyModel, anyConfig);
             System.out.println("A project has been generated successfully in " + output + " folder. Have fun!!!");
         } else {
             System.out.printf("Invalid framework: %s\navaliable frameworks:\n", framework);

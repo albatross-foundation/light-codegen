@@ -53,7 +53,7 @@ public class OpenApiGeneratorTest {
         Any anyModel = JsonIterator.parse(OpenApiGeneratorTest.class.getResourceAsStream(openapiJson), 1024).readAny();
 
         OpenApiGenerator generator = new OpenApiGenerator();
-        generator.generate(targetPath, anyModel, anyConfig);
+        generator.generate(targetPath, null, anyModel, anyConfig);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class OpenApiGeneratorTest {
         Any anyConfig = JsonIterator.parse(OpenApiGeneratorTest.class.getResourceAsStream(configName), 1024).readAny();
         String strModel = new Scanner(OpenApiGeneratorTest.class.getResourceAsStream(openapiYaml), "UTF-8").useDelimiter("\\A").next();
         OpenApiGenerator generator = new OpenApiGenerator();
-        generator.generate(targetPath, strModel, anyConfig);
+        generator.generate(targetPath, null, strModel, anyConfig);
     }
 
     @Test
@@ -69,7 +69,7 @@ public class OpenApiGeneratorTest {
         Any anyConfig = JsonIterator.parse(OpenApiGeneratorTest.class.getResourceAsStream(configName), 1024).readAny();
         String strModel = new Scanner(OpenApiGeneratorTest.class.getResourceAsStream(accountInfoYaml), "UTF-8").useDelimiter("\\A").next();
         OpenApiGenerator generator = new OpenApiGenerator();
-        generator.generate(targetPath, strModel, anyConfig);
+        generator.generate(targetPath, null, strModel, anyConfig);
     }
 
     @Test
@@ -98,7 +98,7 @@ public class OpenApiGeneratorTest {
         Any anyConfig = JsonIterator.parse(OpenApiGeneratorTest.class.getResourceAsStream(configName), 1024).readAny();
         String strModel = new Scanner(OpenApiGeneratorTest.class.getResourceAsStream(openapiNoServersYaml), "UTF-8").useDelimiter("\\A").next();
         OpenApiGenerator generator = new OpenApiGenerator();
-        generator.generate(targetPath, strModel, anyConfig);
+        generator.generate(targetPath, null, strModel, anyConfig);
     }
 
     @Test
@@ -116,7 +116,7 @@ public class OpenApiGeneratorTest {
         Any anyConfig = JsonIterator.parse(OpenApiGeneratorTest.class.getResourceAsStream(configName), 1024).readAny();
         String strModel = new Scanner(OpenApiGeneratorTest.class.getResourceAsStream(openapiEnumYaml), "UTF-8").useDelimiter("\\A").next();
         OpenApiGenerator generator = new OpenApiGenerator();
-        generator.generate(targetPath, strModel, anyConfig);
+        generator.generate(targetPath, null, strModel, anyConfig);
     }
 
     @Test
@@ -125,7 +125,7 @@ public class OpenApiGeneratorTest {
         Any anyConfig = JsonIterator.parse(OpenApiGeneratorTest.class.getResourceAsStream(configName), 1024).readAny();
         String strModel = new Scanner(OpenApiGeneratorTest.class.getResourceAsStream(openapiErrorYaml), "UTF-8").useDelimiter("\\A").next();
         OpenApiGenerator generator = new OpenApiGenerator();
-        generator.generate(targetPath, strModel, anyConfig);
+        generator.generate(targetPath, null, strModel, anyConfig);
     }
 
     @Test
@@ -133,7 +133,7 @@ public class OpenApiGeneratorTest {
         Any anyConfig = JsonIterator.parse(OpenApiGeneratorTest.class.getResourceAsStream(configKafkaName), 1024).readAny();
         String strModel = new Scanner(OpenApiGeneratorTest.class.getResourceAsStream(openapiYaml), "UTF-8").useDelimiter("\\A").next();
         OpenApiGenerator generator = new OpenApiGenerator();
-        generator.generate(targetPath, strModel, anyConfig);
+        generator.generate(targetPath, null, strModel, anyConfig);
     }
 
     @Test

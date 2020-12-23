@@ -20,6 +20,6 @@ public class OpenApiSpecGeneratorTest {
 		
 		OpenApiSpecGenerator generator = new OpenApiSpecGenerator();
 		
-		generator.generate(outputDir, null, anyConfig);
+		generator.generate(outputDir, null, null, anyConfig);
 	}
 }

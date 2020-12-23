@@ -44,7 +44,7 @@ public class OpenApiKotlinGeneratorTest {
         Any anyModel = JsonIterator.parse(OpenApiKotlinGeneratorTest.class.getResourceAsStream(openapiJson), 1024).readAny();
 
         OpenApiKotlinGenerator generator = new OpenApiKotlinGenerator();
-        generator.generate(targetPath, anyModel, anyConfig);
+        generator.generate(targetPath, null, anyModel, anyConfig);
     }
 
     @Test
@@ -52,7 +52,7 @@ public class OpenApiKotlinGeneratorTest {
         Any anyConfig = JsonIterator.parse(OpenApiKotlinGeneratorTest.class.getResourceAsStream(configName), 1024).readAny();
         String strModel = new Scanner(OpenApiKotlinGeneratorTest.class.getResourceAsStream(openapiYaml), "UTF-8").useDelimiter("\\A").next();
         OpenApiKotlinGenerator generator = new OpenApiKotlinGenerator();
-        generator.generate(targetPath, strModel, anyConfig);
+        generator.generate(targetPath, null, strModel, anyConfig);
     }
 
     @Test
@@ -81,6 +81,6 @@ public class OpenApiKotlinGeneratorTest {
         Any anyConfig = JsonIterator.parse(OpenApiKotlinGeneratorTest.class.getResourceAsStream(configName), 1024).readAny();
         String strModel = new Scanner(OpenApiKotlinGeneratorTest.class.getResourceAsStream(openapiNoServersYaml), "UTF-8").useDelimiter("\\A").next();
         OpenApiKotlinGenerator generator = new OpenApiKotlinGenerator();
-        generator.generate(targetPath, strModel, anyConfig);
+        generator.generate(targetPath, null, strModel, anyConfig);
     }
 }

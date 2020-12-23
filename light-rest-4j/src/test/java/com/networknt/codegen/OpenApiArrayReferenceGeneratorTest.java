@@ -55,7 +55,7 @@ public class OpenApiArrayReferenceGeneratorTest {
         Any anyModel = JsonIterator.parse(OpenApiGeneratorTest.class.getResourceAsStream(OpenApiArrayReferenceGeneratorTest.openapiJson), 1024).readAny();
 
         OpenApiGenerator generator = new OpenApiGenerator();
-        generator.generate(targetPath, anyModel, anyConfig);
+        generator.generate(targetPath, null, anyModel, anyConfig);
 
         File file = new File(targetPath);
         JavaProjectBuilder javaProjectBuilder = new JavaProjectBuilder();

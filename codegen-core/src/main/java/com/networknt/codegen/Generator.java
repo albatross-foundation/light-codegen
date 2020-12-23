@@ -40,7 +40,7 @@ public interface Generator {
      * @param config A json object that controls how the generator behaves.
      * @throws IOException throws IOException
      */
-    void generate(String targetPath, Object model, Any config) throws IOException;
+    void generate(String targetPath, String buildTool, Object model, Any config) throws IOException;
 
     /**
      * Get generator name

@@ -44,7 +44,7 @@ public class GraphqlGeneratorTest {
         try(InputStream is = GraphqlGenerator.class.getResourceAsStream(schemaName)) {
             String schema = convertStreamToString(is);
             GraphqlGenerator generator = new GraphqlGenerator();
-            generator.generate(targetPath, schema, anyConfig);
+            generator.generate(targetPath, null, schema, anyConfig);
         }
     }
 
@@ -52,7 +52,7 @@ public class GraphqlGeneratorTest {
     public void testGeneratorWithoutSchema() throws IOException {
         Any anyConfig = JsonIterator.parse(GraphqlGeneratorTest.class.getResourceAsStream(configName), 1024).readAny();
         GraphqlGenerator generator = new GraphqlGenerator();
-        generator.generate(targetPath, null, anyConfig);
+        generator.generate(targetPath, null, null, anyConfig);
     }
 
     static String convertStreamToString(java.io.InputStream is) {

@@ -56,7 +56,7 @@ public class OpenApiSpecGenerator implements Generator {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public void generate(String targetPath, Object model, Any config) throws IOException {
+	public void generate(String targetPath, String buildTool, Object model, Any config) throws IOException {
 		if (StringUtils.isBlank(targetPath)) {
 			logger.error("Output location is not specified.");
 			return;			

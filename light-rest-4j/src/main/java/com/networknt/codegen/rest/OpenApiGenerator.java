@@ -31,7 +31,7 @@ import static java.io.File.separator;
 
 /**
  * The input for OpenAPI 3.0 generator include config with json format and OpenAPI specification in yaml format.
- *
+ * <p>
  * The model is OpenAPI spec in yaml format. And config file is config.json in JSON format.
  *
  * @author Steve Hu
@@ -49,6 +49,8 @@ public class OpenApiGenerator implements Generator {
     boolean generateModelOnly = false;
     boolean generateValuesYml = false;
     boolean skipPomFile = false;
+    boolean isGradle = false;
+    boolean isMaven = false;
 
     public OpenApiGenerator() {
         typeMapping.put("array", "java.util.List");
@@ -74,15 +76,13 @@ public class OpenApiGenerator implements Generator {
     }
 
     /**
-     *
      * @param targetPath The output directory of the generated project
-     * @param model The optional model data that trigger the generation, i.e. swagger specification, graphql IDL etc.
-     * @param config A json object that controls how the generator behaves.
-     *
+     * @param model      The optional model data that trigger the generation, i.e. swagger specification, graphql IDL etc.
+     * @param config     A json object that controls how the generator behaves.
      * @throws IOException IO Exception occurs during code generation
      */
     @Override
-    public void generate(final String targetPath, Object model, Any config) throws IOException {
+    public void generate(final String targetPath, final String buildTool, Object model, Any config) throws IOException {
         // whoever is calling this needs to make sure that model is converted to Map<String, Object>
         String rootPackage = config.toString("rootPackage").trim();
         final String modelPackage = config.toString("modelPackage").trim();
@@ -129,13 +129,6 @@ public class OpenApiGenerator implements Generator {
         if (!generateModelOnly) {
             // if set to true, regenerate the code only (handlers, model and the handler.yml, potentially affected by operation changes
             if (!specChangeCodeReGenOnly) {
-                // generate configurations, project, masks, certs, etc
-                if (!skipPomFile) {
-                    transfer(targetPath, "", "pom.xml", templates.rest.openapi.pom.template(config));
-                }
-
-
-                transferMaven(targetPath);
                 // There is only one port that should be exposed in Dockerfile, otherwise, the service
                 // discovery will be so confused. If https is enabled, expose the https port. Otherwise http port.
                 String expose = "";
@@ -145,14 +138,40 @@ public class OpenApiGenerator implements Generator {
                     expose = httpPort;
                 }
 
-                transfer(targetPath, "docker", "Dockerfile", templates.rest.dockerfile.template(config, expose));
-                transfer(targetPath, "docker", "Dockerfile-Slim", templates.rest.dockerfileslim.template(config, expose));
-                transfer(targetPath, "", "build.sh", templates.rest.buildSh.template(dockerOrganization, serviceId));
+                // generate configurations, project, masks, certs, etc
+                if ("maven".equals(buildTool.toLowerCase().trim())) {
+                    if (!skipPomFile) {
+                        transfer(targetPath, "", "pom.xml", templates.rest.openapi.pom.template(config));
+                    }
+                    transfer(targetPath, "docker", "Dockerfile", templates.rest.dockerfileMaven.template(config, expose));
+                    transfer(targetPath, "docker", "Dockerfile-Slim", templates.rest.dockerfileslimMaven.template(config, expose));
+                    transfer(targetPath, "", "build.sh", templates.rest.buildMaven.template(dockerOrganization, serviceId));
+                    transferMaven(targetPath);
+                } else {
+                    transfer(targetPath, "", "build.gradle", templates.rest.openapi.build.template(config));
+                    transfer(targetPath, "", "settings.gradle", templates.rest.openapi.settings.template(config));
+                    transfer(targetPath, "docker", "Dockerfile", templates.rest.dockerfileGradle.template(config, expose));
+                    transfer(targetPath, "docker", "Dockerfile-Slim", templates.rest.dockerfileslimGradle.template(config, expose));
+                    transfer(targetPath, "", "build.sh", templates.rest.buildGradle.template(dockerOrganization, serviceId));
+                    transferGradle(targetPath);
+                }
+                // There is only one port that should be exposed in Dockerfile, otherwise, the service
+                // discovery will be so confused. If https is enabled, expose the https port. Otherwise http port.
+//                String expose = "";
+//                if (enableHttps) {
+//                    expose = httpsPort;
+//                } else {
+//                    expose = httpPort;
+//                }
+
+//                transfer(targetPath, "docker", "Dockerfile", templates.rest.dockerfile.template(config, expose));
+//                transfer(targetPath, "docker", "Dockerfile-Slim", templates.rest.dockerfileslim.template(config, expose));
+//                transfer(targetPath, "", "build.sh", templates.rest.buildSh.template(dockerOrganization, serviceId));
                 transfer(targetPath, "", "kubernetes.yml", templates.rest.kubernetes.template(dockerOrganization, serviceId, config.get("artifactId").toString().trim(), expose, version));
                 transfer(targetPath, "", ".gitignore", templates.rest.gitignore.template());
                 transfer(targetPath, "", "README.md", templates.rest.README.template());
                 transfer(targetPath, "", "LICENSE", templates.rest.LICENSE.template());
-                if(eclipseIDE) {
+                if (eclipseIDE) {
                     transfer(targetPath, "", ".classpath", templates.rest.classpath.template());
                     transfer(targetPath, "", ".project", templates.rest.project.template(config));
                 }
@@ -174,13 +193,13 @@ public class OpenApiGenerator implements Generator {
 
                 transfer(targetPath, ("src.main.resources.config").replace(".", separator), "primary.crt", templates.rest.primaryCrt.template());
                 transfer(targetPath, ("src.main.resources.config").replace(".", separator), "secondary.crt", templates.rest.secondaryCrt.template());
-                if(kafkaProducer) {
+                if (kafkaProducer) {
                     transfer(targetPath, ("src.main.resources.config").replace(".", separator), "kafka-producer.yml", templates.rest.kafkaProducerYml.template(kafkaTopic));
                 }
-                if(kafkaConsumer) {
+                if (kafkaConsumer) {
                     transfer(targetPath, ("src.main.resources.config").replace(".", separator), "kafka-streams.yml", templates.rest.kafkaStreamsYml.template(artifactId));
                 }
-                if(supportAvro) {
+                if (supportAvro) {
                     transfer(targetPath, ("src.main.resources.config").replace(".", separator), "schema-registry.yml", templates.rest.schemaRegistryYml.template());
                 }
 
@@ -215,16 +234,16 @@ public class OpenApiGenerator implements Generator {
         // model
         Any anyComponents;
         if (model instanceof Any) {
-            anyComponents = ((Any)model).get("components");
+            anyComponents = ((Any) model).get("components");
         } else if (model instanceof String) {
             // this must be yaml format and we need to convert to json for JsonIterator.
             OpenApi3 openApi3 = null;
             try {
-                openApi3 = (OpenApi3)new OpenApiParser().parse((String)model, new URL("https://oas.lightapi.net/"));
+                openApi3 = (OpenApi3) new OpenApiParser().parse((String) model, new URL("https://oas.lightapi.net/"));
             } catch (MalformedURLException e) {
                 throw new RuntimeException("Failed to parse the model", e);
             }
-            anyComponents = JsonIterator.deserialize(Overlay.toJson((OpenApi3Impl)openApi3).toString()).get("components");
+            anyComponents = JsonIterator.deserialize(Overlay.toJson((OpenApi3Impl) openApi3).toString()).get("components");
         } else {
             throw new RuntimeException("Invalid Model Class: " + model.getClass());
         }
@@ -253,8 +272,8 @@ public class OpenApiGenerator implements Generator {
         for (Map<String, Object> op : operationList) {
             String className = op.get("handlerName").toString();
             @SuppressWarnings("unchecked")
-            List<Map> parameters = (List<Map>)op.get("parameters");
-            Map<String, String> responseExample = (Map<String, String>)op.get("responseExample");
+            List<Map> parameters = (List<Map>) op.get("parameters");
+            Map<String, String> responseExample = (Map<String, String>) op.get("responseExample");
             String example = responseExample.get("example");
             String statusCode = responseExample.get("statusCode");
             statusCode = StringUtils.isBlank(statusCode) || statusCode.equals("default") ? "-1" : statusCode;
@@ -304,7 +323,7 @@ public class OpenApiGenerator implements Generator {
                 copyFile(is, Paths.get(targetPath, ("src.main.resources.config").replace(".", separator), "openapi.json"));
             }
         } else if (model instanceof String) {
-            try (InputStream is = new ByteArrayInputStream(((String)model).getBytes(StandardCharsets.UTF_8))) {
+            try (InputStream is = new ByteArrayInputStream(((String) model).getBytes(StandardCharsets.UTF_8))) {
                 copyFile(is, Paths.get(targetPath, ("src.main.resources.config").replace(".", separator), "openapi.yaml"));
             }
         }
@@ -313,11 +332,11 @@ public class OpenApiGenerator implements Generator {
     /**
      * Initialize the property map with base elements as name, getter, setters, etc
      *
-     * @param entry The entry for which to generate
+     * @param entry   The entry for which to generate
      * @param propMap The property map to add to, created in the caller
      */
     private void initializePropertyMap(Entry<String, Any> entry, Map<String, Any> propMap) {
-	    String name = convertToValidJavaVariableName(entry.getKey());
+        String name = convertToValidJavaVariableName(entry.getKey());
         propMap.put("jsonProperty", Any.wrap(name));
         if (name.startsWith("@")) {
             name = name.substring(1);
@@ -328,7 +347,7 @@ public class OpenApiGenerator implements Generator {
         propMap.put("setter", Any.wrap("set" + name.substring(0, 1).toUpperCase() + name.substring(1)));
         // assume it is not enum unless it is overwritten
         propMap.put("isEnum", Any.wrap(false));
-	    propMap.put("isNumEnum", Any.wrap(false));
+        propMap.put("isNumEnum", Any.wrap(false));
     }
 
     /**
@@ -347,14 +366,14 @@ public class OpenApiGenerator implements Generator {
             initializePropertyMap(entryProp, propMap);
 
             String name = entryProp.getKey();
-		    String type = null;
+            String type = null;
             boolean isArray = false;
             for (Map.Entry<String, Any> entryElement : entryProp.getValue().asMap().entrySet()) {
                 //System.out.println("key = " + entryElement.getKey() + " value = " + entryElement.getValue());
 
                 if ("type".equals(entryElement.getKey())) {
                     String t = typeMapping.get(entryElement.getValue().toString());
-		            type = t;
+                    type = t;
                     if ("java.util.List".equals(t)) {
                         isArray = true;
                     } else {
@@ -366,8 +385,8 @@ public class OpenApiGenerator implements Generator {
                     if (a.get("$ref").valueType() != ValueType.INVALID && isArray) {
                         String s = a.get("$ref").toString();
                         s = s.substring(s.lastIndexOf('/') + 1);
-                        s = s.substring(0,1).toUpperCase() + (s.length() > 1 ? s.substring(1) : "");
-		                propMap.put("type", getListOf(s));
+                        s = s.substring(0, 1).toUpperCase() + (s.length() > 1 ? s.substring(1) : "");
+                        propMap.put("type", getListOf(s));
                     }
                     if (a.get("type").valueType() != ValueType.INVALID && isArray) {
                         propMap.put("type", getListOf(typeMapping.get(a.get("type").toString())));
@@ -376,7 +395,7 @@ public class OpenApiGenerator implements Generator {
                 if ("$ref".equals(entryElement.getKey())) {
                     String s = entryElement.getValue().toString();
                     s = s.substring(s.lastIndexOf('/') + 1);
-		            s = s.substring(0,1).toUpperCase() + (s.length() > 1 ? s.substring(1) : "");
+                    s = s.substring(0, 1).toUpperCase() + (s.length() > 1 ? s.substring(1) : "");
                     propMap.put("type", Any.wrap(s));
                 }
                 if ("default".equals(entryElement.getKey())) {
@@ -384,14 +403,14 @@ public class OpenApiGenerator implements Generator {
                     propMap.put("default", a);
                 }
                 if ("enum".equals(entryElement.getKey())) {
-		            // different generate format for number enum
-		            if ("Integer".equals(type) || "Double".equals(type) || "Float".equals(type)
+                    // different generate format for number enum
+                    if ("Integer".equals(type) || "Double".equals(type) || "Float".equals(type)
                             || "Long".equals(type) || "Short".equals(type) || "java.math.BigDecimal".equals(type)) {
-		                propMap.put("isNumEnum", Any.wrap(true));
+                        propMap.put("isNumEnum", Any.wrap(true));
                     }
                     propMap.put("isEnum", Any.wrap(true));
                     propMap.put("nameWithEnum", Any.wrap(name.substring(0, 1).toUpperCase() + name.substring(1) + "Enum"));
-		            propMap.put("value", getValidEnumName(entryElement));
+                    propMap.put("value", getValidEnumName(entryElement));
                 }
 
                 if ("format".equals(entryElement.getKey())) {
@@ -481,6 +500,7 @@ public class OpenApiGenerator implements Generator {
             props.add(propMap);
         }
     }
+
     public static final String HASHER = "hasher";
     public static final String COMPARATOR = "comparator";
 
@@ -488,7 +508,7 @@ public class OpenApiGenerator implements Generator {
         return new UnresolvedTypeListAny(s);
     }
 
-  private static abstract class UnresolvedTypeAny extends Any {
+    private static abstract class UnresolvedTypeAny extends Any {
 
         Any type;
 
@@ -591,15 +611,15 @@ public class OpenApiGenerator implements Generator {
         List<Map<String, Object>> result = new ArrayList<>();
         String s;
         if (model instanceof Any) {
-            s = ((Any)model).toString();
+            s = ((Any) model).toString();
         } else if (model instanceof String) {
-            s = (String)model;
+            s = (String) model;
         } else {
             throw new RuntimeException("Invalid Model Class: " + model.getClass());
         }
         OpenApi3 openApi3 = null;
         try {
-            openApi3 = (OpenApi3)new OpenApiParser().parse(s, new URL("https://oas.lightapi.net/"));
+            openApi3 = (OpenApi3) new OpenApiParser().parse(s, new URL("https://oas.lightapi.net/"));
         } catch (MalformedURLException e) {
         }
         String basePath = getBasePath(openApi3);
@@ -710,7 +730,7 @@ public class OpenApiGenerator implements Generator {
             return "_" + string;
         }
         // replace invalid characters with underscore
-	    StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
         if (!Character.isJavaIdentifierStart(string.charAt(0))) {
             stringBuilder.append('_');
         }
@@ -724,21 +744,23 @@ public class OpenApiGenerator implements Generator {
         return stringBuilder.toString();
     }
 
-    private  boolean isEnumHasDescription(String string) {
-       return string.contains(":") || string.contains("{") || string.contains("(");
+    private boolean isEnumHasDescription(String string) {
+        return string.contains(":") || string.contains("{") || string.contains("(");
     }
 
-    private  String getEnumName(String string) {
+    private String getEnumName(String string) {
         if (string.contains(":")) return string.substring(0, string.indexOf(":")).trim();
         if (string.contains("(") && string.contains(")")) return string.substring(0, string.indexOf("(")).trim();
         if (string.contains("{") && string.contains("}")) return string.substring(0, string.indexOf("{")).trim();
         return string;
     }
 
-    private  String getEnumDescription(String string) {
+    private String getEnumDescription(String string) {
         if (string.contains(":")) return string.substring(string.indexOf(":") + 1).trim();
-        if (string.contains("(") && string.contains(")")) return string.substring(string.indexOf("(") + 1, string.indexOf(")")).trim();
-        if (string.contains("{") && string.contains("}")) return string.substring(string.indexOf("{") + 1, string.indexOf("}")).trim();
+        if (string.contains("(") && string.contains(")"))
+            return string.substring(string.indexOf("(") + 1, string.indexOf(")")).trim();
+        if (string.contains("{") && string.contains("}"))
+            return string.substring(string.indexOf("{") + 1, string.indexOf("}")).trim();
 
         return string;
     }
@@ -910,8 +932,8 @@ public class OpenApiGenerator implements Generator {
                         do {
                             UnresolvedTypeAny previous = null;
                             while (any instanceof UnresolvedTypeAny) {
-                                previous = (UnresolvedTypeAny)any;
-                                any = ((UnresolvedTypeAny)any).get();
+                                previous = (UnresolvedTypeAny) any;
+                                any = ((UnresolvedTypeAny) any).get();
                             }
 
                             if (any == null) {
@@ -956,6 +978,7 @@ public class OpenApiGenerator implements Generator {
             references.put(modelFileName, props.get(0).get("type"));
         }
     }
+
     private String extendModelName(String str1, String str2) {
         return str1 + str2.substring(0, 1).toUpperCase() + str2.substring(1);
     }

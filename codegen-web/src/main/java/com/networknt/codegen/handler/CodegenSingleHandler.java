@@ -120,7 +120,7 @@ public class CodegenSingleHandler implements Handler {
             }
 
             Generator generator = FrameworkRegistry.getInstance().getGenerator(framework);
-            generator.generate(projectFolder, model, Any.wrap(config));
+            generator.generate(projectFolder, null, model, Any.wrap(config));
 
         } catch (Exception e) {
             logger.error("Exception:", e);

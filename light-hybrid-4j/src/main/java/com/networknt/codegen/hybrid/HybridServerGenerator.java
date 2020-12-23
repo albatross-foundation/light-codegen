@@ -22,7 +22,7 @@ public class HybridServerGenerator implements Generator {
     }
 
     @Override
-    public void generate(String targetPath, Object model, Any config) throws IOException {
+    public void generate(String targetPath, String buildTool, Object model, Any config) throws IOException {
         // whoever is calling this needs to make sure that model is converted to Map<String, Object>
         String rootPackage = config.get("rootPackage").toString();
         String modelPackage = config.get("modelPackage").toString();

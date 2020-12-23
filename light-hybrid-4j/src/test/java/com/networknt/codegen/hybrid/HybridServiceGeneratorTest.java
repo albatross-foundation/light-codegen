@@ -38,7 +38,7 @@ public class HybridServiceGeneratorTest {
         Any anyModel = JsonIterator.parse(HybridServiceGeneratorTest.class.getResourceAsStream(schemaName), 1024).readAny();
 
         HybridServiceGenerator generator = new HybridServiceGenerator();
-        generator.generate(targetPath, anyModel, anyConfig);
+        generator.generate(targetPath, null, anyModel, anyConfig);
     }
 
     @Test

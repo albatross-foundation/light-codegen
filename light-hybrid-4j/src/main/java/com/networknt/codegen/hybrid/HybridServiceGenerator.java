@@ -30,7 +30,7 @@ public class HybridServiceGenerator implements Generator {
     }
 
     @Override
-    public void generate(String targetPath, Object model, Any config) throws IOException {
+    public void generate(String targetPath, String buildTool, Object model, Any config) throws IOException {
         // whoever is calling this needs to make sure that model is converted to Map<String, Object>
         String handlerPackage = config.get("handlerPackage").toString();
         boolean overwriteHandler = config.toBoolean("overwriteHandler");

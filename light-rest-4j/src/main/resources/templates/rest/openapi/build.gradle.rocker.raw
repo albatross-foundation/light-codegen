@@ -1,0 +1,82 @@
+@import com.jsoniter.any.Any
+@args (Any config)plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        url = uri('https://oss.sonatype.org/content/repositories/snapshots')
+    }
+
+    maven {
+        url = uri('https://repo1.maven.org/maven2')
+    }
+}
+
+ext {
+    javaMainClass = 'com.networknt.server.Server'
+}
+
+application {
+    mainClassName = javaMainClass
+}
+
+dependencies {
+    implementation group: 'com.networknt', name: 'config', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'utility', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'security', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'client', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'audit', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'info', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'health', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'status', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'exception', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'body', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'dump', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'mask', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'metrics', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'handler', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'sanitizer', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'traceability', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'correlation', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'service', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'registry', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'balance', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'cluster', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'consul', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'decryptor', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'server', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'json-schema-validator', version: '1.0.45'
+    implementation group: 'com.networknt', name: 'openapi-parser', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'openapi-meta', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'openapi-security', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'openapi-validator', version: '2.0.21'
+    implementation group: 'com.networknt', name: 'specification', version: '2.0.21'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.4'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.10.4'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.4'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
+    implementation 'io.undertow:undertow-core:2.1.3.Final'
+    testImplementation 'junit:junit:4.12'
+}
+
+group = '@config.get("groupId")'
+version = '@config.get("version")'
+description = '@config.get("name")'
+sourceCompatibility = '1.8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "$mainClassName"
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}

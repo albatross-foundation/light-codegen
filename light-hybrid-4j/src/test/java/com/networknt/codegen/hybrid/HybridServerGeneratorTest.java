@@ -39,7 +39,7 @@ public class HybridServerGeneratorTest {
         Any anyConfig = JsonIterator.parse(HybridServerGeneratorTest.class.getResourceAsStream(configName), 1024).readAny();
 
         HybridServerGenerator generator = new HybridServerGenerator();
-        generator.generate(targetPath, null, anyConfig);
+        generator.generate(targetPath, null, null, anyConfig);
     }
 
     @Test
